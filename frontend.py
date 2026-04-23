@@ -1,7 +1,6 @@
 import streamlit as st
 import requests
 import json
-from PIL import Image
 import io
 import base64
 import traceback
@@ -73,8 +72,10 @@ if 'short_code_stats' not in st.session_state:
 if 'school_data' not in st.session_state:
     st.session_state.school_data = None
 
-# API endpoint
-API_URL = "http://localhost:8000"
+# API endpoint - CHANGE THIS FOR DEPLOYMENT
+# For local testing: API_URL = "http://localhost:8000"
+# For deployment: Use your deployed backend URL
+API_URL = "https://your-backend-url.onrender.com"  # CHANGE THIS when you deploy backend
 
 # Professional Card Preview CSS
 PROFESSIONAL_CARD_PREVIEW = """
@@ -263,27 +264,26 @@ with tab1:
                         st.error(f"❌ Error: {str(e)}")
                         st.error(traceback.format_exc())
     
-    # Display Business Card
+    # Display Business Card - FIXED: No PIL dependency
     if st.session_state.form_submitted and st.session_state.qr_generated and st.session_state.qr_image_bytes:
         st.divider()
         st.subheader("✨ Your Professional Digital Business Card")
         
         try:
-            qr_image = Image.open(io.BytesIO(st.session_state.qr_image_bytes))
             card_data = st.session_state.card_data
             
             col1, col2 = st.columns([1, 1])
             
             with col1:
                 st.markdown("**📱 QR Code - Scan to Connect**")
-                st.image(qr_image, caption="Share this QR code", width=220)
+                # Display QR code from base64 without PIL
+                st.image(f"data:image/png;base64,{st.session_state.current_qr_data['qr_code']}", 
+                        caption="Share this QR code", width=220)
                 
-                # Download button
-                buffered = io.BytesIO()
-                qr_image.save(buffered, format="PNG")
+                # Download button for QR code
                 st.download_button(
                     label="💾 Download QR Code",
-                    data=buffered.getvalue(),
+                    data=st.session_state.qr_image_bytes,
                     file_name=f"business_card_{st.session_state.current_qr_data['short_code']}.png",
                     mime="image/png",
                     use_container_width=True
