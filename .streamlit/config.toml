@@ -1,0 +1,15 @@
+[server]
+maxUploadSize = 200
+
+[browser]
+gatherUsageStats = false
+
+[runner]
+magicEnabled = false
+
+[theme]
+base = "dark"
+
+# Force Python version
+[deprecation]
+showErrorDetails = true
