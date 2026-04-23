@@ -1,5 +1,2 @@
-zlib1g-dev
-libjpeg-dev
-libpng-dev
-libtiff-dev
-libfreetype6-dev
+libgl1-mesa-glx
+libglib2.0-0
