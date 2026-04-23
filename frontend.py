@@ -1,11 +1,9 @@
 import streamlit as st
 import requests
 import json
-import io
 import base64
 import traceback
 from datetime import datetime
-import time
 import re
 import webbrowser
 
@@ -55,27 +53,17 @@ st.markdown("""
 # Initialize session state
 if 'qr_generated' not in st.session_state:
     st.session_state.qr_generated = False
-if 'profile_data' not in st.session_state:
-    st.session_state.profile_data = None
-if 'short_url' not in st.session_state:
-    st.session_state.short_url = None
-if 'qr_image_bytes' not in st.session_state:
-    st.session_state.qr_image_bytes = None
-if 'current_qr_data' not in st.session_state:
-    st.session_state.current_qr_data = None
 if 'form_submitted' not in st.session_state:
     st.session_state.form_submitted = False
+if 'current_qr_data' not in st.session_state:
+    st.session_state.current_qr_data = None
+if 'card_data' not in st.session_state:
+    st.session_state.card_data = None
 if 'generated_short_url' not in st.session_state:
     st.session_state.generated_short_url = None
-if 'short_code_stats' not in st.session_state:
-    st.session_state.short_code_stats = None
-if 'school_data' not in st.session_state:
-    st.session_state.school_data = None
 
-# API endpoint - CHANGE THIS FOR DEPLOYMENT
-# For local testing: API_URL = "http://localhost:8000"
-# For deployment: Use your deployed backend URL
-API_URL = "https://your-backend-url.onrender.com"  # CHANGE THIS when you deploy backend
+# API endpoint - Update this with your deployed backend URL
+API_URL = "http://localhost:8000"
 
 # Professional Card Preview CSS
 PROFESSIONAL_CARD_PREVIEW = """
@@ -162,21 +150,21 @@ with tab1:
         
         with col1:
             st.subheader("📝 Personal Information")
-            full_name = st.text_input("Full Name *", placeholder="John Doe", value="Rizwan Ali" if not st.session_state.form_submitted else "")
-            job_title = st.text_input("Job Title *", placeholder="Software Engineer / Manager", value="Student")
-            company_name = st.text_input("Company Name *", placeholder="ABC Technologies", value="DPS")
-            email = st.text_input("Email Address", placeholder="john@example.com", value="rizwan@gmail.com")
-            phone = st.text_input("Phone Number *", placeholder="+91 9876543210", value="+91 9897655432")
-            address = st.text_area("Address *", placeholder="Enter your complete address", value="Lucknow")
+            full_name = st.text_input("Full Name *", placeholder="John Doe")
+            job_title = st.text_input("Job Title *", placeholder="Software Engineer")
+            company_name = st.text_input("Company Name *", placeholder="ABC Technologies")
+            email = st.text_input("Email Address", placeholder="john@example.com")
+            phone = st.text_input("Phone Number *", placeholder="+91 9876543210")
+            address = st.text_area("Address *", placeholder="Enter your complete address")
             bio = st.text_area("Short Bio", placeholder="Tell people about yourself...", height=80)
             
         with col2:
             st.subheader("🌐 Social Media Links")
             st.caption("Add your professional social profiles")
             
-            instagram = st.text_input("Instagram", placeholder="https://instagram.com/username", value="https://www.instagram.com/rizwankhan1160/")
-            linkedin = st.text_input("LinkedIn", placeholder="https://linkedin.com/in/username", value="https://www.linkedin.com/in/rizwan-ali-389660156/")
-            github = st.text_input("GitHub", placeholder="https://github.com/username", value="https://github.com/KhanRiyazi")
+            instagram = st.text_input("Instagram", placeholder="https://instagram.com/username")
+            linkedin = st.text_input("LinkedIn", placeholder="https://linkedin.com/in/username")
+            github = st.text_input("GitHub", placeholder="https://github.com/username")
             twitter = st.text_input("Twitter/X", placeholder="https://twitter.com/username")
             facebook = st.text_input("Facebook", placeholder="https://facebook.com/username")
             website = st.text_input("Personal Website", placeholder="https://yourwebsite.com")
@@ -191,7 +179,6 @@ with tab1:
         if submitted:
             if not full_name or not phone or not company_name:
                 st.error("❌ Please fill in all required fields (*)")
-                st.session_state.form_submitted = False
             else:
                 # Prepare social links
                 social_links = []
@@ -230,29 +217,23 @@ with tab1:
                         if response.status_code == 200:
                             data = response.json()
                             
-                            if 'qr_code' not in data:
-                                st.error("❌ QR code data missing in response")
-                            else:
-                                st.session_state.qr_generated = True
-                                st.session_state.form_submitted = True
-                                st.session_state.current_qr_data = data
-                                st.session_state.card_data = {
-                                    "full_name": full_name,
-                                    "job_title": job_title,
-                                    "company_name": company_name,
-                                    "email": email,
-                                    "phone": phone,
-                                    "address": address,
-                                    "bio": bio_text,
-                                    "card_type": card_type,
-                                    "social_links": social_links
-                                }
-                                
-                                qr_image_data = base64.b64decode(data['qr_code'])
-                                st.session_state.qr_image_bytes = qr_image_data
-                                
-                                st.success("✅ Professional business card generated successfully!")
-                                st.rerun()
+                            st.session_state.qr_generated = True
+                            st.session_state.form_submitted = True
+                            st.session_state.current_qr_data = data
+                            st.session_state.card_data = {
+                                "full_name": full_name,
+                                "job_title": job_title,
+                                "company_name": company_name,
+                                "email": email,
+                                "phone": phone,
+                                "address": address,
+                                "bio": bio_text,
+                                "card_type": card_type,
+                                "social_links": social_links
+                            }
+                            
+                            st.success("✅ Professional business card generated successfully!")
+                            st.rerun()
                         else:
                             error_msg = response.json().get('detail', 'Unknown error')
                             st.error(f"❌ Failed to generate business card: {error_msg}")
@@ -262,10 +243,9 @@ with tab1:
                         st.info("💡 Please start the backend with: python main.py")
                     except Exception as e:
                         st.error(f"❌ Error: {str(e)}")
-                        st.error(traceback.format_exc())
     
-    # Display Business Card - FIXED: No PIL dependency
-    if st.session_state.form_submitted and st.session_state.qr_generated and st.session_state.qr_image_bytes:
+    # Display Business Card
+    if st.session_state.form_submitted and st.session_state.qr_generated and st.session_state.current_qr_data:
         st.divider()
         st.subheader("✨ Your Professional Digital Business Card")
         
@@ -276,33 +256,36 @@ with tab1:
             
             with col1:
                 st.markdown("**📱 QR Code - Scan to Connect**")
-                # Display QR code from base64 without PIL
-                st.image(f"data:image/png;base64,{st.session_state.current_qr_data['qr_code']}", 
-                        caption="Share this QR code", width=220)
-                
-                # Download button for QR code
-                st.download_button(
-                    label="💾 Download QR Code",
-                    data=st.session_state.qr_image_bytes,
-                    file_name=f"business_card_{st.session_state.current_qr_data['short_code']}.png",
-                    mime="image/png",
-                    use_container_width=True
-                )
+                # Display QR code from base64 directly
+                if 'qr_code' in st.session_state.current_qr_data:
+                    st.image(f"data:image/png;base64,{st.session_state.current_qr_data['qr_code']}", 
+                            caption="Share this QR code", width=220)
+                    
+                    # Download button for QR code
+                    import base64
+                    qr_bytes = base64.b64decode(st.session_state.current_qr_data['qr_code'])
+                    st.download_button(
+                        label="💾 Download QR Code",
+                        data=qr_bytes,
+                        file_name=f"business_card_{st.session_state.current_qr_data.get('short_code', 'card')}.png",
+                        mime="image/png",
+                        use_container_width=True
+                    )
                 
                 # Profile URL
-                profile_url = f"{API_URL}{st.session_state.current_qr_data['profile_url']}"
-                st.markdown("**🔗 Business Card Link**")
-                st.code(profile_url, language="text")
-                
-                col1a, col1b = st.columns(2)
-                with col1a:
-                    if st.button("🌐 View Card", use_container_width=True):
-                        webbrowser.open(profile_url)
-                        st.info("Opening in browser...")
-                with col1b:
-                    if st.button("📋 Copy Link", use_container_width=True):
-                        st.write(f'<script>navigator.clipboard.writeText("{profile_url}")</script>', unsafe_allow_html=True)
-                        st.success("✅ Copied!")
+                if 'profile_url' in st.session_state.current_qr_data:
+                    profile_url = f"{API_URL}{st.session_state.current_qr_data['profile_url']}"
+                    st.markdown("**🔗 Business Card Link**")
+                    st.code(profile_url, language="text")
+                    
+                    col1a, col1b = st.columns(2)
+                    with col1a:
+                        if st.button("🌐 View Card", use_container_width=True):
+                            webbrowser.open(profile_url)
+                    with col1b:
+                        if st.button("📋 Copy Link", use_container_width=True):
+                            st.write(f'<script>navigator.clipboard.writeText("{profile_url}")</script>', unsafe_allow_html=True)
+                            st.success("✅ Copied!")
             
             with col2:
                 st.markdown(PROFESSIONAL_CARD_PREVIEW, unsafe_allow_html=True)
@@ -345,22 +328,15 @@ with tab1:
         except Exception as e:
             st.error(f"❌ Error displaying business card: {str(e)}")
 
-# Tab 2: URL Shortener
+# Tab 2: URL Shortener (simplified)
 with tab2:
     st.header("🔗 Smart URL Shortener")
     st.markdown("Create short, memorable links for any destination")
     
     with st.form("url_form"):
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            original_url = st.text_input("Enter Long URL *", placeholder="https://example.com/very/long/url/path")
-            custom_code = st.text_input("Custom Short Code (Optional)", placeholder="my-custom-link", max_chars=20)
-            st.caption("Use letters, numbers, and underscores only")
-        
-        with col2:
-            url_category = st.selectbox("Link Category", ["General", "Portfolio", "Project", "Social", "Other"])
-            url_expires_days = st.slider("Link Expiry (days)", 1, 365, 30, key="url_expiry")
+        original_url = st.text_input("Enter Long URL *", placeholder="https://example.com/very/long/url/path")
+        custom_code = st.text_input("Custom Short Code (Optional)", placeholder="my-custom-link", max_chars=20)
+        url_expires_days = st.slider("Link Expiry (days)", 1, 365, 30)
         
         submitted_url = st.form_submit_button("🔗 Create Short Link", type="primary", use_container_width=True)
         
@@ -383,7 +359,6 @@ with tab2:
                             st.session_state.generated_short_url = short_url
                             
                             st.success("✅ Short link created successfully!")
-                            
                             st.markdown("### 📋 Your Short Link")
                             st.code(short_url, language="text")
                             
@@ -392,35 +367,19 @@ with tab2:
                                 if st.button("🔗 Open Link", use_container_width=True):
                                     webbrowser.open(short_url)
                             with col2:
-                                if st.button("📋 Copy Link", use_container_width=True, key="copy_short_url"):
-                                    st.write(f'<script>navigator.clipboard.writeText("{short_url}")</script>', unsafe_allow_html=True)
-                                    st.success("✅ Copied to clipboard!")
-                            
-                            st.info(f"**Category:** {url_category}")
-                            st.info(f"**Short Code:** `{data['short_code']}`")
-                            st.info(f"**Expires:** {data['expires_at'].split('T')[0]}")
-                            st.info(f"**Initial Clicks:** {data['clicks']}")
-                            
-                        elif response.status_code == 400:
-                            error_msg = response.json().get('detail', 'Custom code already taken')
-                            st.error(f"❌ {error_msg}")
+                                if st.button("📋 Copy Link", use_container_width=True):
+                                    st.success(f"✅ Copied: {short_url}")
                         else:
-                            error_msg = response.json().get('detail', 'Unknown error')
-                            st.error(f"❌ Failed to create short link: {error_msg}")
+                            st.error("❌ Failed to create short link")
                             
-                    except requests.exceptions.ConnectionError:
-                        st.error(f"❌ Cannot connect to backend server at {API_URL}")
-                        st.info("💡 Please start the backend with: python main.py")
                     except Exception as e:
                         st.error(f"❌ Error: {str(e)}")
 
-# Tab 3: Analytics
+# Tab 3: Analytics (simplified)
 with tab3:
     st.header("📊 Link Analytics & Tracking")
-    st.markdown("Track performance of your business cards and short links")
     
-    stats_code = st.text_input("Enter Short Code", placeholder="e.g., abc123", 
-                               help="Enter the short code from your business card or shortened URL")
+    stats_code = st.text_input("Enter Short Code", placeholder="e.g., abc123")
     
     if st.button("📊 Get Analytics", type="primary", use_container_width=True):
         if stats_code:
@@ -430,56 +389,23 @@ with tab3:
                     
                     if response.status_code == 200:
                         data = response.json()
-                        
                         st.success(f"✅ Analytics for '{stats_code}'")
                         
-                        # Display metrics in columns
-                        col1, col2, col3, col4 = st.columns(4)
+                        col1, col2, col3 = st.columns(3)
                         with col1:
-                            st.metric("📌 Type", data['type'].upper(), delta=None)
+                            st.metric("📌 Type", data.get('type', 'N/A').upper())
                         with col2:
-                            st.metric("👆 Total Clicks", data['clicks'], delta="+0" if data['clicks'] == 0 else f"+{data['clicks']}")
+                            st.metric("👆 Total Clicks", data.get('clicks', 0))
                         with col3:
-                            created_date = data['created_at'].split('T')[0] if 'T' in data['created_at'] else data['created_at']
-                            st.metric("📅 Created", created_date)
-                        with col4:
                             if 'expires_at' in data:
-                                expires_at = data['expires_at']
-                                expires_date_str = expires_at.split('T')[0] if 'T' in expires_at else expires_at
-                                st.metric("⏰ Expires", expires_date_str)
+                                st.metric("⏰ Expires", data['expires_at'].split('T')[0])
                         
-                        # Expiry status
-                        st.markdown("---")
-                        if 'expires_at' in data:
-                            try:
-                                expires_date = datetime.fromisoformat(data['expires_at'].replace('Z', '+00:00'))
-                                if expires_date < datetime.now(expires_date.tzinfo):
-                                    st.warning("⚠️ This link has expired!")
-                                else:
-                                    days_left = (expires_date - datetime.now(expires_date.tzinfo)).days
-                                    st.success(f"✅ Active - {days_left} days remaining")
-                            except:
-                                pass
-                        
-                        # Original destination
                         if data.get('original_url'):
-                            st.markdown("---")
                             st.markdown("**🔗 Original Destination:**")
                             st.code(data['original_url'], language="text")
-                        
-                        # Full details expander
-                        with st.expander("📋 View Complete Details"):
-                            st.json(data)
-                        
-                    elif response.status_code == 404:
-                        st.error("❌ Short code not found or has expired")
-                        st.info("💡 Check the code and try again")
                     else:
-                        st.error("❌ Error fetching analytics")
+                        st.error("❌ Short code not found")
                         
-                except requests.exceptions.ConnectionError:
-                    st.error(f"❌ Cannot connect to backend server at {API_URL}")
-                    st.info("💡 Please start the backend with: python main.py")
                 except Exception as e:
                     st.error(f"❌ Error: {str(e)}")
         else:
@@ -489,88 +415,17 @@ with tab3:
 with st.sidebar:
     st.image("https://img.icons8.com/color/96/qr-code.png", width=80)
     st.header("💼 Professional Features")
-    st.markdown("""
-    ### Digital Business Card System
-    
-    A complete professional solution for:
-    - ✅ **Digital Business Cards**
-    - ✅ **Smart URL Shortening**
-    - ✅ **QR Code Generation**
-    - ✅ **Analytics Dashboard**
-    
-    ---
-    
-    ### ✨ Premium Features:
-    
-    - **Professional Card Design**
-      - Modern gradient themes
-      - Social media integration
-      - Save to contacts (vCard)
-      - Share via QR code
-    
-    - **URL Management**
-      - Custom short codes
-      - Expiration control
-      - Click tracking
-      - Category organization
-    
-    - **Analytics**
-      - Real-time statistics
-      - Performance metrics
-      - Expiry monitoring
-    
-    ---
-    
-    ### 🚀 Quick Start:
-    
-    1. **Create Business Card**
-       - Fill your details
-       - Add social links
-       - Generate QR code
-    
-    2. **Shorten URLs**
-       - Paste long URL
-       - Get short link
-       - Track clicks
-    
-    3. **Monitor Analytics**
-       - View statistics
-       - Check expiry
-       - Track engagement
-    
-    ---
-    
-    ### 🔧 Server Status
-    """)
     
     # Server status check
     try:
         response = requests.get(f"{API_URL}/health", timeout=2)
         if response.status_code == 200:
             st.success("✅ Backend Connected")
-            st.caption(f"📍 Server: {API_URL}")
-            status_data = response.json()
-            if 'timestamp' in status_data:
-                st.caption(f"🕐 Status: {status_data['timestamp'][:19]}")
         else:
             st.error("❌ Backend Error")
-    except requests.exceptions.ConnectionError:
-        st.error("❌ Backend Not Connected")
-        st.info("💡 Run this command:")
-        st.code("python main.py", language="bash")
     except:
-        st.error("❌ Connection Failed")
-    
-    st.markdown("---")
-    
-    # Stats
-    st.subheader("📈 Platform Stats")
-    st.markdown("""
-    - **Active Cards:** {count}
-    - **Links Created:** {count}
-    - **Total Clicks:** {count}
-    """.format(count="Loading..."))
+        st.error("❌ Backend Not Connected")
+        st.info("💡 Run: python main.py")
     
     st.markdown("---")
     st.caption("Made with ❤️ using Streamlit & FastAPI")
-    st.caption("Version 4.0 | Professional Edition")
